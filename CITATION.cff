@@ -7,7 +7,7 @@ authors:
     given-names: "R. R."
     affiliation: "Instituto Federal do Triângulo Mineiro (IFTM), Brazil"
 license: MIT
-repository-code: "https://github.com/REPLACE-WITH-PUBLIC-REPOSITORY-URL"
+repository-code: "https://github.com/rrf-astro/flare-index-universality"
 keywords:
   - stellar flares
   - Kepler

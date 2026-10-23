@@ -1,7 +1,7 @@
 
 ## 1. Run header
 
-Run started (UTC): 2026-10-23 03:04:51
+Run started (UTC): 2026-10-23 21:37:26
 
 Mode: full
 
@@ -13,9 +13,9 @@ Data sources:
 
 | catalog | rows | accessed_utc | source | sha256 |
 |---|---|---|---|---|
-| J/ApJS/241/29/table2 | 162262 | 2026-10-23 03:04:54 | VizieR | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
-| J/ApJS/241/29/table1 | 3420 | 2026-10-23 03:04:55 | VizieR | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
-| J/ApJS/229/30/catalog | 197096 | 2026-10-23 03:04:59 | VizieR | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
+| J/ApJS/241/29/table2 | 162262 | 2026-10-23 21:37:31 | local cache of an earlier VizieR download | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
+| J/ApJS/241/29/table1 | 3420 | 2026-10-23 21:37:32 | local cache of an earlier VizieR download | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
+| J/ApJS/229/30/catalog | 197096 | 2026-10-23 21:37:32 | local cache of an earlier VizieR download | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
 
 
 ## 2. Data integrity
@@ -180,18 +180,18 @@ Grid and full scan of xmin on random subsamples of 8000 flares, and alpha from t
 
 | class | points | alpha grid | alpha full scan | log10 xmin grid | log10 xmin full | alpha powerlaw | Hill error | full scan seconds |
 |---|---|---|---|---|---|---|---|---|
-| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.3 |
+| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.2 |
 | K | 8000 | 2.345 | 2.345 | 34.32 | 34.32 | 2.345 | 0.042 | 0.3 |
-| G | 8000 | 2.387 | 2.390 | 34.50 | 34.50 | 2.387 | 0.033 | 0.3 |
-| F | 8000 | 2.059 | 2.058 | 34.44 | 34.44 | 2.059 | 0.019 | 0.3 |
+| G | 8000 | 2.387 | 2.390 | 34.50 | 34.50 | 2.387 | 0.033 | 0.2 |
+| F | 8000 | 2.059 | 2.058 | 34.44 | 34.44 | 2.059 | 0.019 | 0.2 |
 
-Run time planning from the fit time on 60000 points (M1 0.07 s, M2 0.13 s):
+Run time planning from the fit time on 60000 points (M1 0.06 s, M2 0.10 s):
 
 | task | estimated minutes (serial) | estimated minutes (parallel) |
 |---|---|---|
-| bootstrap, one class, B = 1000 | 2.1 | 0.5 |
-| all four classes, B = 1000 | 8.5 | 2.1 |
-| equality test calibration, B_NULL = 500, four classes | 4.3 | 1.1 |
+| bootstrap, one class, B = 1000 | 1.7 | 0.4 |
+| all four classes, B = 1000 | 6.8 | 1.7 |
+| equality test calibration, B_NULL = 500, four classes | 3.4 | 0.8 |
 
 
 ## 7. Luminosity-scaled energy
@@ -590,6 +590,120 @@ Range of the cutoff index over the five windows and over all variants of the sen
 | K | 1.93 | 1.78 | 2.27 | 1.75 | 2.27 |
 | G | 1.95 | 1.70 | 2.22 | 1.70 | 2.22 |
 
+Duration subsets and the comparison with 3/2. Cutoff index of each class for all flares and for the flares with at least 4 or 5 points, at three lower limits, with the bootstrap by star (B = 1000) and the 99 per cent interval:
+
+| subset | lower limit | class | tail | alpha | se | 99 low | 99 high | 3/2 rejected | p 3/2 |
+|---|---|---|---|---|---|---|---|---|---|
+| all flares | 34.5 | M | 14533 | 2.007 | 0.033 | 1.896 | 2.075 | True | 0.0010 |
+| all flares | 34.5 | K | 25651 | 1.931 | 0.107 | 1.690 | 2.042 | True | 0.0010 |
+| all flares | 34.5 | G | 8267 | 1.947 | 0.060 | 1.774 | 2.100 | True | 0.0010 |
+| all flares | 34.8 | M | 7249 | 2.168 | 0.035 | 2.050 | 2.230 | True | 0.0010 |
+| all flares | 34.8 | K | 13685 | 2.130 | 0.145 | 1.773 | 2.222 | True | 0.0010 |
+| all flares | 34.8 | G | 3787 | 2.175 | 0.092 | 1.931 | 2.385 | True | 0.0010 |
+| all flares | 35.0 | M | 4299 | 2.271 | 0.044 | 2.149 | 2.361 | True | 0.0010 |
+| all flares | 35.0 | K | 8449 | 2.267 | 0.196 | 1.756 | 2.333 | True | 0.0010 |
+| all flares | 35.0 | G | 2026 | 2.221 | 0.127 | 1.893 | 2.553 | True | 0.0010 |
+| at least 4 points | 34.5 | M | 12553 | 1.921 | 0.042 | 1.801 | 2.009 | True | 0.0010 |
+| at least 4 points | 34.5 | K | 21830 | 1.836 | 0.129 | 1.559 | 1.964 | True | 0.0010 |
+| at least 4 points | 34.5 | G | 6989 | 1.797 | 0.065 | 1.613 | 1.941 | True | 0.0010 |
+| at least 4 points | 34.8 | M | 6610 | 2.126 | 0.041 | 1.999 | 2.215 | True | 0.0010 |
+| at least 4 points | 34.8 | K | 12428 | 2.077 | 0.163 | 1.684 | 2.172 | True | 0.0010 |
+| at least 4 points | 34.8 | G | 3450 | 2.083 | 0.096 | 1.808 | 2.311 | True | 0.0010 |
+| at least 4 points | 35.0 | M | 4009 | 2.251 | 0.047 | 2.115 | 2.352 | True | 0.0010 |
+| at least 4 points | 35.0 | K | 7903 | 2.239 | 0.200 | 1.711 | 2.312 | True | 0.0010 |
+| at least 4 points | 35.0 | G | 1906 | 2.132 | 0.133 | 1.802 | 2.461 | True | 0.0010 |
+| at least 5 points | 34.5 | M | 9728 | 1.777 | 0.049 | 1.638 | 1.876 | True | 0.0010 |
+| at least 5 points | 34.5 | K | 16443 | 1.698 | 0.157 | 1.362 | 1.863 | False | 0.3756 |
+| at least 5 points | 34.5 | G | 5095 | 1.568 | 0.074 | 1.372 | 1.730 | False | 0.3526 |
+| at least 5 points | 34.8 | M | 5590 | 2.058 | 0.049 | 1.900 | 2.146 | True | 0.0010 |
+| at least 5 points | 34.8 | K | 10229 | 1.983 | 0.190 | 1.528 | 2.097 | True | 0.0020 |
+| at least 5 points | 34.8 | G | 2833 | 1.893 | 0.103 | 1.614 | 2.119 | True | 0.0010 |
+| at least 5 points | 35.0 | M | 3521 | 2.226 | 0.050 | 2.079 | 2.344 | True | 0.0010 |
+| at least 5 points | 35.0 | K | 6840 | 2.181 | 0.225 | 1.603 | 2.266 | True | 0.0010 |
+| at least 5 points | 35.0 | G | 1671 | 1.971 | 0.145 | 1.595 | 2.310 | True | 0.0040 |
+
+Bands against 3/2 for the same subsets, with the 99 per cent interval of each valid band:
+
+| subset | valid bands | CI above 3/2 | CI contains 3/2 | CI below 3/2 | lowest index |
+|---|---|---|---|---|---|
+| all flares | 11 | 11 | 0 | 0 | 1.647 |
+| at least 4 points | 11 | 6 | 5 | 0 | 1.550 |
+| at least 5 points | 10 | 2 | 7 | 1 | 1.346 |
+
+| subset | band | Teff median | tail | alpha | se | 99 low | 99 high |
+|---|---|---|---|---|---|---|---|
+| all flares | 0 | 3317 | 6448 | 2.000 | 0.036 | 1.902 | 2.072 |
+| all flares | 1 | 3646 | 6172 | 1.949 | 0.043 | 1.839 | 2.071 |
+| all flares | 2 | 3900 | 5512 | 1.861 | 0.048 | 1.731 | 1.990 |
+| all flares | 3 | 4308 | 4472 | 1.838 | 0.055 | 1.678 | 1.953 |
+| all flares | 4 | 4538 | 5662 | 1.647 | 0.048 | 1.506 | 1.767 |
+| all flares | 5 | 4820 | 4708 | 1.729 | 0.056 | 1.552 | 1.849 |
+| all flares | 6 | 5105 | 4608 | 2.043 | 0.147 | 1.605 | 2.150 |
+| all flares | 7 | 5313 | 4812 | 1.709 | 0.077 | 1.515 | 1.923 |
+| all flares | 8 | 5522 | 3190 | 1.938 | 0.099 | 1.654 | 2.163 |
+| all flares | 9 | 5767 | 2821 | 1.963 | 0.110 | 1.619 | 2.207 |
+| all flares | 10 | 6021 | 1091 | 2.538 | 0.136 | 2.077 | 2.819 |
+| at least 4 points | 0 | 3315 | 5497 | 1.928 | 0.040 | 1.813 | 2.011 |
+| at least 4 points | 1 | 3635 | 5211 | 1.835 | 0.050 | 1.696 | 1.946 |
+| at least 4 points | 2 | 3892 | 4559 | 1.765 | 0.048 | 1.634 | 1.878 |
+| at least 4 points | 3 | 4298 | 4050 | 1.709 | 0.059 | 1.558 | 1.852 |
+| at least 4 points | 4 | 4530 | 4836 | 1.550 | 0.058 | 1.406 | 1.679 |
+| at least 4 points | 5 | 4804 | 3882 | 1.567 | 0.066 | 1.343 | 1.699 |
+| at least 4 points | 6 | 5094 | 4125 | 1.980 | 0.178 | 1.478 | 2.068 |
+| at least 4 points | 7 | 5308 | 4104 | 1.577 | 0.083 | 1.357 | 1.776 |
+| at least 4 points | 8 | 5517 | 2645 | 1.795 | 0.108 | 1.503 | 2.026 |
+| at least 4 points | 9 | 5752 | 2273 | 1.629 | 0.123 | 1.303 | 1.932 |
+| at least 4 points | 10 | 6014 | 1061 | 2.216 | 0.192 | 1.722 | 2.686 |
+| at least 5 points | 0 | 3310 | 4080 | 1.812 | 0.055 | 1.625 | 1.920 |
+| at least 5 points | 1 | 3611 | 4020 | 1.667 | 0.053 | 1.517 | 1.788 |
+| at least 5 points | 2 | 3880 | 3227 | 1.627 | 0.070 | 1.450 | 1.794 |
+| at least 5 points | 3 | 4273 | 3371 | 1.555 | 0.056 | 1.415 | 1.701 |
+| at least 5 points | 4 | 4519 | 3518 | 1.356 | 0.077 | 1.147 | 1.550 |
+| at least 5 points | 5 | 4753 | 2754 | 1.346 | 0.068 | 1.148 | 1.478 |
+| at least 5 points | 6 | 5044 | 3162 | 1.444 | 0.075 | 1.244 | 1.635 |
+| at least 5 points | 7 | 5274 | 3027 | 1.880 | 0.327 | 1.061 | 1.951 |
+| at least 5 points | 8 | 5480 | 2018 | 1.785 | 0.133 | 1.374 | 2.054 |
+| at least 5 points | 9 | 5700 | 1737 | 1.459 | 0.154 | 1.011 | 1.793 |
+
+Permutation test of the whole distribution with and without the scale of each group removed, 2000 permutations. The scale is the median of log E_L of the group, recomputed in every permutation. Pairwise p values are corrected with Holm.
+
+| test | lower limit | scale | stat | p | P | stars | p Holm |
+|---|---|---|---|---|---|---|---|
+| classes M, K, G | 34.5 | not scaled | 24.5069 | 0.0005 | 2000 | 2027 | nan |
+| pair M and K | 34.5 | not scaled | 6.5370 | 0.0005 | 2000 | 1518 | 0.0015 |
+| pair M and G | 34.5 | not scaled | 6.1860 | 0.0010 | 2000 | 938 | 0.0015 |
+| pair K and G | 34.5 | not scaled | 23.1045 | 0.0005 | 2000 | 1598 | 0.0015 |
+| valid bands of Teff | 34.5 | not scaled | 50.2382 | 0.0005 | 2000 | 2179 | nan |
+| valid bands without the hottest | 34.5 | not scaled | 32.5057 | 0.0005 | 2000 | 2024 | nan |
+| classes M, K, G | 34.5 | scaled | 13.9931 | 0.0005 | 2000 | 2027 | nan |
+| pair M and K | 34.5 | scaled | 3.9711 | 0.0020 | 2000 | 1518 | 0.0020 |
+| pair M and G | 34.5 | scaled | 3.9049 | 0.0010 | 2000 | 938 | 0.0020 |
+| pair K and G | 34.5 | scaled | 12.6592 | 0.0005 | 2000 | 1598 | 0.0015 |
+| valid bands of Teff | 34.5 | scaled | 26.8775 | 0.0005 | 2000 | 2179 | nan |
+| valid bands without the hottest | 34.5 | scaled | 17.9055 | 0.0005 | 2000 | 2024 | nan |
+| classes M, K, G | 34.8 | not scaled | 14.1190 | 0.0005 | 2000 | 1624 | nan |
+| pair M and K | 34.8 | not scaled | 2.4525 | 0.0130 | 2000 | 1263 | 0.0130 |
+| pair M and G | 34.8 | not scaled | 5.2536 | 0.0010 | 2000 | 734 | 0.0020 |
+| pair K and G | 34.8 | not scaled | 13.7199 | 0.0005 | 2000 | 1251 | 0.0015 |
+| valid bands of Teff | 34.8 | not scaled | 20.8774 | 0.0005 | 2000 | 1701 | nan |
+| valid bands without the hottest | 34.8 | not scaled | 17.8502 | 0.0005 | 2000 | 1622 | nan |
+| classes M, K, G | 34.8 | scaled | 10.5071 | 0.0005 | 2000 | 1624 | nan |
+| pair M and K | 34.8 | scaled | 2.4686 | 0.0075 | 2000 | 1263 | 0.0075 |
+| pair M and G | 34.8 | scaled | 3.6765 | 0.0005 | 2000 | 734 | 0.0015 |
+| pair K and G | 34.8 | scaled | 9.5865 | 0.0005 | 2000 | 1251 | 0.0015 |
+| valid bands of Teff | 34.8 | scaled | 15.8933 | 0.0005 | 2000 | 1701 | nan |
+| valid bands without the hottest | 34.8 | scaled | 13.5588 | 0.0005 | 2000 | 1622 | nan |
+
+Simulation of the level and the power of the equality test, 1000 replicates for each scatter of the index between stars. Window estimator, three classes of 300 stars with a mean of 60 flares, bootstrap with B = 300. Power refers to an index 0.2 higher in one class.
+
+| scatter between stars | size, bootstrap by star | size, Wald with independent flares | power, bootstrap by star | power, Wald with independent flares |
+|---|---|---|---|---|
+| 0.150 | 0.064 | 0.241 | 1.000 | 1.000 |
+| 0.250 | 0.070 | 0.515 | 0.999 | 1.000 |
+| 0.450 | 0.047 | 0.750 | 0.923 | 1.000 |
+
+Variants with the additional checks included: 30 variants of the classes, 5 with another verdict (S5 window 34.3 to 35.3, S2 Yang class limits, S2 limits minus 200 K, S4 energy of G times 1.25, duration at least 5 points). Planned variants alone: 26, 4 with another verdict. Bands: 16 variants, 0 with another verdict, slope significant in 13, sign of the slope changes in 2. Planned variants of the bands alone: 11.
+
 
 ## 17. Figures
 
@@ -620,11 +734,11 @@ Files in the folder figures, in EPS and PDF. Figure 1 shows the complementary di
 
 * The index varies between stars of class G (between star scatter 0.47).
 
-* The verdict changes in 4 variants of the sensitivity analysis.
+* The verdict changes in 5 variants of the sensitivity analysis.
 
 * Bands [11] of the twelve have fewer than 1000 flares in the tail and stay out of the band tests.
 
-* The linear trend of the cutoff index with Teff is not robust: the slope is significant in 9 of 11 variants and depends on the lower limit of E_L. The window estimate has a slope compatible with zero.
+* The linear trend of the cutoff index with Teff is not robust: the slope is significant in 13 of 16 variants and depends on the lower limit of E_L. The window estimate has a slope compatible with zero.
 
 * The cutoff model trades the index against the cutoff scale, which raises the error of the index in some bands. The window estimate is more precise but is not the primary model.
 
@@ -650,8 +764,12 @@ Files in the folder figures, in EPS and PDF. Figure 1 shows the complementary di
 | cutoff data are separated from the pure power law | ok | 18 of 20 samples with the nested test p below 0.1 |
 | grid and full scan agree on real data | ok | largest difference in alpha 0.0068 |
 | cutoff fit from per star sums recovers the index | ok | mean alpha 1.897 against 1.9, scatter 0.014, 40 samples of 20000 flares |
-| equality test keeps its size with correlated flares | ok | rejection rate 0.05 at 0.05 with the bootstrap by star against 0.19 for the independent flares Wald test, 100 replicates |
-| equality test detects a difference of 0.2 | ok | rejection rate 1.00 against 1.00 for the independent flares Wald test |
+| equality test keeps its size with correlated flares, scatter 0.15 | ok | rejection rate 0.064 at 0.05 with the bootstrap by star against 0.241 for the independent flares Wald test, 1000 replicates |
+| equality test detects a difference of 0.2, scatter 0.15 | ok | rejection rate 1.000 against 1.000 for the independent flares Wald test |
+| equality test keeps its size with correlated flares, scatter 0.25 | ok | rejection rate 0.070 at 0.05 with the bootstrap by star against 0.515 for the independent flares Wald test, 1000 replicates |
+| equality test detects a difference of 0.2, scatter 0.25 | ok | rejection rate 0.999 against 1.000 for the independent flares Wald test |
+| equality test keeps its size with correlated flares, scatter 0.45 | ok | rejection rate 0.047 at 0.05 with the bootstrap by star against 0.750 for the independent flares Wald test, 1000 replicates |
+| equality test detects a difference of 0.2, scatter 0.45 | ok | rejection rate 0.923 against 1.000 for the independent flares Wald test |
 | band equality test keeps its size without a trend | ok | rejection rate 0.04 at 0.05, 100 replicates of 12 bands |
 | band trend test keeps its size without a trend | ok | rejection rate 0.07 at 0.05 |
 | band equality test detects a trend of 0.1 per 1000 K | ok | rejection rate 1.00, and 1.00 for the trend test |

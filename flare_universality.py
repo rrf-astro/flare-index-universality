@@ -110,9 +110,9 @@ MIN_TAIL_SCAN = 1000
 VAL_MIN_TAIL = 100
 SIZES = {
     "full": {"recovery": 200, "trunc": 100, "gof_size": 100, "gof_synth": 100, "gof_power": 12, "lr": 100,
-             "preview_gof": 100, "boot": 1000, "variant": 200, "gof_fixed": 200, "valid_eq": 100},
+             "preview_gof": 100, "boot": 1000, "variant": 200, "gof_fixed": 200, "valid_eq": 100, "sim_eq": 1000},
     "fast": {"recovery": 40, "trunc": 20, "gof_size": 20, "gof_synth": 40, "gof_power": 4, "lr": 20,
-             "preview_gof": 20, "boot": 100, "variant": 40, "gof_fixed": 40, "valid_eq": 20},
+             "preview_gof": 20, "boot": 100, "variant": 40, "gof_fixed": 40, "valid_eq": 20, "sim_eq": 40},
 }[MODE]
 # Primary analysis on the luminosity-scaled energy
 XMIN_L = 34.5
@@ -1764,11 +1764,11 @@ def simulate_classes(rng, alphas, n_stars=300, mean_flares=60.0, tau=0.15, L=np.
     return sums, L
 
 
-def test_replicates(alphas, reps, B=300):
-    rng = np.random.default_rng(seed_for("v8-" + "-".join(map(str, alphas))))
+def test_replicates(alphas, reps, B=300, tau=0.15):
+    rng = np.random.default_rng(seed_for("v8-" + "-".join(map(str, alphas)) + ("" if tau == 0.15 else f"-t{tau}")))
     rej_boot, rej_naive = 0, 0
     for _ in range(reps):
-        sums, L = simulate_classes(rng, alphas)
+        sums, L = simulate_classes(rng, alphas, tau=tau)
         ah, ab, naive_w = [], [], []
         for U in sums:
             K = len(U)
@@ -1793,15 +1793,21 @@ def test_replicates(alphas, reps, B=300):
     return rej_boot / reps, rej_naive / reps
 
 
-size_b, size_n = test_replicates((2.0, 2.0, 2.0), SIZES["valid_eq"])
-power_b, power_n = test_replicates((2.0, 2.0, 2.2), SIZES["valid_eq"])
-V8 = pd.DataFrame({"scenario": ["same index, size at 0.05", "index 0.2 higher in one class, power"],
-                   "bootstrap by star": [size_b, power_b], "Wald with independent flares": [size_n, power_n]})
-record_validation("equality test keeps its size with correlated flares", 0.02 <= size_b <= 0.10,
-                  f"rejection rate {size_b:.2f} at 0.05 with the bootstrap by star against {size_n:.2f} for the independent "
-                  f"flares Wald test, {SIZES['valid_eq']} replicates")
-record_validation("equality test detects a difference of 0.2", power_b >= 0.8,
-                  f"rejection rate {power_b:.2f} against {power_n:.2f} for the independent flares Wald test")
+SIM_TAUS = (0.15, 0.25, 0.45)
+SIM_ROWS = []
+for tau in SIM_TAUS:
+    sb, sn = test_replicates((2.0, 2.0, 2.0), SIZES["sim_eq"], tau=tau)
+    pb, pn = test_replicates((2.0, 2.0, 2.2), SIZES["sim_eq"], tau=tau)
+    SIM_ROWS.append({"scatter between stars": tau, "size, bootstrap by star": sb, "size, Wald with independent flares": sn,
+                     "power, bootstrap by star": pb, "power, Wald with independent flares": pn})
+    record_validation(f"equality test keeps its size with correlated flares, scatter {tau}", 0.02 <= sb <= 0.10,
+                      f"rejection rate {sb:.3f} at 0.05 with the bootstrap by star against {sn:.3f} for the independent "
+                      f"flares Wald test, {SIZES['sim_eq']} replicates")
+    record_validation(f"equality test detects a difference of 0.2, scatter {tau}", pb >= 0.8,
+                      f"rejection rate {pb:.3f} against {pn:.3f} for the independent flares Wald test")
+V8 = pd.DataFrame(SIM_ROWS)
+size_b, size_n = SIM_ROWS[0]["size, bootstrap by star"], SIM_ROWS[0]["size, Wald with independent flares"]
+power_b, power_n = SIM_ROWS[0]["power, bootstrap by star"], SIM_ROWS[0]["power, Wald with independent flares"]
 V8
 
 # %% [markdown]
@@ -2842,6 +2848,187 @@ RANGE_TAB = pd.DataFrame([
     for c in PRIMARY_CLASSES])
 HOLM_TAB, RANGE_TAB
 
+# %% [markdown]
+# ### Duration subsets against 3/2
+#
+# The flares with at least 4 or 5 points are fitted again, with the bootstrap by
+# star at full size, at three lower limits. A higher lower limit tests whether the
+# fall of the index comes from the incompleteness that the cut in duration adds
+# near the lower limit. The cutoff index is compared with 3/2 through the 99 per
+# cent bootstrap interval, as in the main analysis. The same is done band by band.
+
+# %%
+DUR_LIMITS = (34.5, 34.8, 35.0)
+sample_d4 = sample_pts[sample_pts["points"] >= 4].reset_index(drop=True)
+sample_d5 = sample_pts[sample_pts["points"] >= 5].reset_index(drop=True)
+DUR_SUBSETS = (("all flares", sampleL), ("at least 4 points", sample_d4), ("at least 5 points", sample_d5))
+
+
+def class_alpha_rows(smp, lo, B, label):
+    rows = []
+    for c in PRIMARY_CLASSES:
+        res = primary_class_fit(smp, c, lo, lo + 1.0, B, seed_for(f"x15a-{label}-{lo}-{c}"))
+        b = res["boot_alpha_c"]
+        b = b[np.isfinite(b)]
+        l99, h99 = np.percentile(b, [0.5, 99.5])
+        rows.append({"subset": label, "lower limit": lo, "class": c, "tail": res["tail"], "alpha": res["alpha_c"],
+                     "se": float(b.std(ddof=1)), "99 low": float(l99), "99 high": float(h99),
+                     "3/2 rejected": bool(not (l99 <= 1.5 <= h99)), "p 3/2": p_against(b, res["alpha_c"], 1.5)})
+    return rows
+
+
+DUR_ROWS = []
+for lab, smp in DUR_SUBSETS:
+    for lo in DUR_LIMITS:
+        DUR_ROWS += class_alpha_rows(smp, lo, SIZES["boot"], lab)
+DUR_TAB = pd.DataFrame(DUR_ROWS)
+
+
+def band_ci_rows(bands, label):
+    rows = []
+    for b in bands:
+        if not b["valid"]:
+            continue
+        a = b["boot_alpha_c"]
+        a = a[np.isfinite(a)]
+        l99, h99 = np.percentile(a, [0.5, 99.5])
+        rows.append({"subset": label, "band": b["band"], "Teff median": b["Teff median"], "tail": b["tail"],
+                     "alpha": b["alpha_c"], "se": float(a.std(ddof=1)), "99 low": float(l99), "99 high": float(h99)})
+    return rows
+
+
+BAND_CI_ROWS = band_ci_rows(BANDS12, "all flares")
+for lab, smp in DUR_SUBSETS[1:]:
+    bnd = band_fits(smp, quantile_edges(smp, 12), XMIN_L, XMIN_L + 1.0, SIZES["boot"], "x15b-" + lab)
+    BAND_CI_ROWS += band_ci_rows(bnd, lab)
+BAND_CI = pd.DataFrame(BAND_CI_ROWS)
+BAND_CI_COUNTS = pd.DataFrame([{"subset": lab, "valid bands": int((BAND_CI["subset"] == lab).sum()),
+                                "CI above 3/2": int(((BAND_CI["subset"] == lab) & (BAND_CI["99 low"] > 1.5)).sum()),
+                                "CI contains 3/2": int(((BAND_CI["subset"] == lab) & (BAND_CI["99 low"] <= 1.5) & (BAND_CI["99 high"] >= 1.5)).sum()),
+                                "CI below 3/2": int(((BAND_CI["subset"] == lab) & (BAND_CI["99 high"] < 1.5)).sum()),
+                                "lowest index": float(BAND_CI.loc[BAND_CI["subset"] == lab, "alpha"].min())}
+                               for lab, _ in DUR_SUBSETS])
+DUR_TAB, BAND_CI_COUNTS
+
+# %% [markdown]
+# ### Permutation test with the scale of each group removed
+#
+# The test of the previous section compares E_L between groups, so a residual
+# multiplicative factor of a group would be enough to reject. Here the logarithm of
+# E_L of each group is shifted by the median of the group, and the shift is
+# recomputed from the permuted labels in every permutation, so the null
+# distribution has the same construction as the observed statistic. The statistic
+# is the same Cramer-von Mises distance, computed exactly on the pooled sample.
+
+# %%
+def cvm_exact(vals, lab, ng):
+    order = np.argsort(vals, kind="stable")
+    li = lab[order]
+    N = len(vals)
+    cum = np.empty((ng, N))
+    for g in range(ng):
+        cum[g] = np.cumsum(li == g)
+    n = cum[:, -1]
+    F = np.arange(1, N + 1) / N
+    return float((n * (((cum / n[:, None]) - F) ** 2).mean(axis=1)).sum())
+
+
+def perm_test_exact(smp, lo, label_of, groups, P, seed, scale):
+    """label_of maps the star table (KIC, Teff, cls) to a group label for each star."""
+    t = smp.loc[smp["logEL"] >= lo, ["KIC", "logEL", "Teff", "cls"]]
+    stars = t.groupby("KIC").agg(Teff=("Teff", "first"), cls=("cls", "first"))
+    star_lab = np.asarray(label_of(stars))
+    keep_star = np.isin(star_lab, groups)
+    kic_index = pd.Series(np.arange(len(stars)), index=stars.index)
+    star_of_flare = kic_index.reindex(t["KIC"]).to_numpy()
+    keep = keep_star[star_of_flare]
+    x = t["logEL"].to_numpy(float)[keep]
+    new_idx = np.cumsum(keep_star) - 1
+    sof = new_idx[star_of_flare[keep]]
+    lab0 = star_lab[keep_star]
+    gmap = {g: i for i, g in enumerate(groups)}
+    lab0 = np.array([gmap[g] for g in lab0])
+    ng = len(groups)
+
+    def stat(lab_star):
+        lf = lab_star[sof]
+        v = x
+        if scale:
+            med = np.array([np.median(x[lf == g]) for g in range(ng)])
+            v = x - med[lf]
+        return cvm_exact(v, lf, ng)
+
+    t_obs = stat(lab0)
+    rng = np.random.default_rng(seed)
+    t_p = np.array([stat(rng.permutation(lab0)) for _ in range(P)])
+    return {"stat": t_obs, "p": float((1 + np.sum(t_p >= t_obs)) / (P + 1)), "P": P, "stars": int(len(lab0))}
+
+
+_by_class = lambda st: st["cls"].to_numpy(object)
+_by_band = lambda st: band_index(st["Teff"].to_numpy(float), EDGES12)
+_valid_bands = [b["band"] for b in BANDS12 if b["valid"]]
+_hot_band = max((b for b in BANDS12 if b["valid"]), key=lambda b: b["Teff median"])["band"]
+PERM2 = []
+for lo in (XMIN_L, 34.8):
+    for scale in (False, True):
+        tag = "scaled" if scale else "not scaled"
+        sd = lambda name: seed_for(f"x15c-{name}-{lo}-{scale}")
+        PERM2.append({"test": "classes M, K, G", "lower limit": lo, "scale": tag,
+                      **perm_test_exact(sampleL, lo, _by_class, list(PRIMARY_CLASSES), PERM_P, sd("cls"), scale), "p Holm": np.nan})
+        pp = []
+        for a, b in (("M", "K"), ("M", "G"), ("K", "G")):
+            r = perm_test_exact(sampleL, lo, _by_class, [a, b], PERM_P, sd(a + b), scale)
+            pp.append(r["p"])
+            PERM2.append({"test": f"pair {a} and {b}", "lower limit": lo, "scale": tag, **r, "p Holm": np.nan})
+        adj = holm_adjust(pp)
+        for k in range(3):
+            PERM2[-3 + k]["p Holm"] = float(adj[k])
+        PERM2.append({"test": "valid bands of Teff", "lower limit": lo, "scale": tag,
+                      **perm_test_exact(sampleL, lo, _by_band, _valid_bands, PERM_P, sd("bands"), scale), "p Holm": np.nan})
+        PERM2.append({"test": "valid bands without the hottest", "lower limit": lo, "scale": tag,
+                      **perm_test_exact(sampleL, lo, _by_band, [k for k in _valid_bands if k != _hot_band], PERM_P, sd("nohot"), scale),
+                      "p Holm": np.nan})
+PERM2_TAB = pd.DataFrame(PERM2)
+PERM2_TAB
+
+# %% [markdown]
+# ### Variant tables with the additional checks
+#
+# The checks of this section that change the sample or the scale join the
+# sensitivity variants of the classes and of the bands, so that the tables and the
+# counts of changed verdicts include them. The counts of the planned variants alone
+# are kept as well.
+
+# %%
+VERDICT_CORE = dict(VERDICT)
+BAND_VERDICT_CORE = dict(BAND_VERDICT)
+VAR_ALL = pd.concat([VAR_TAB, X_CLASS_TAB[X_CLASS_TAB["variant"] != "baseline"]], ignore_index=True)
+VAR_ALL["B used"] = np.where(VAR_ALL["variant"] == "baseline", SIZES["boot"], SIZES["variant"])
+_u = VAR_ALL.dropna(subset=["verdict"])
+_u = _u[(_u["min tail"] >= MIN_TAIL) & (_u["variant"] != "baseline")]
+_c = _u[_u["verdict"] != VERDICT["verdict"]]
+VERDICT["variants used"] = int(len(_u))
+VERDICT["variants with another verdict"] = int(len(_c))
+VERDICT["robust"] = len(_c) == 0
+VERDICT_CHANGED_LIST = list(_c["variant"])
+
+_kept, _hot = drop_hottest(BANDS12)
+_row_nh = variant_summary("without the hottest valid band", _kept)
+_bx = X_BAND_TAB[X_BAND_TAB["variant"] != "baseline"]
+VBAND_ALL = pd.concat([VBAND_TAB, _bx, pd.DataFrame([_row_nh])], ignore_index=True)
+VBAND_ALL["B used"] = np.where(VBAND_ALL["variant"].str.startswith("baseline") | (VBAND_ALL["variant"] == "without the hottest valid band"),
+                               SIZES["boot"], SIZES["variant"])
+_bu = VBAND_ALL[VBAND_ALL["valid bands"] >= 5].dropna(subset=["verdict"])
+_bu = _bu[~_bu["variant"].str.startswith("baseline")]
+BAND_VERDICT["variants used"] = int(len(_bu))
+BAND_VERDICT["variants changed"] = int((_bu["verdict"] != BAND_VERDICT["verdict"]).sum())
+BAND_VERDICT["robust"] = BAND_VERDICT["variants changed"] == 0
+BAND_VERDICT["slope sign changes"] = int((np.sign(_bu["slope cutoff"]) != np.sign(BAND_VERDICT["slope"])).sum())
+BAND_VERDICT["slope variants significant"] = int((_bu["p slope cutoff"] < ALPHA_TEST).sum())
+BAND_VERDICT["slope robust"] = bool(BAND_VERDICT["slope variants significant"] == BAND_VERDICT["variants used"]
+                                    and BAND_VERDICT["slope sign changes"] == 0)
+pd.DataFrame([VERDICT_CORE, VERDICT]), pd.DataFrame([BAND_VERDICT_CORE, BAND_VERDICT])
+
 # %%
 DOC.section("15. Additional checks")
 DOC.add("Common minimum duration. The shortest flare of the catalog has three points above the threshold. Share of the flares "
@@ -2865,6 +3052,27 @@ DOC.add("Holm correction over the main tests (equality by classes, equality by b
 DOC.table(HOLM_TAB, {"p": "{:.4f}", "p Holm": "{:.4f}"})
 DOC.add("Range of the cutoff index over the five windows and over all variants of the sensitivity analysis:")
 DOC.table(RANGE_TAB, {c: "{:.2f}" for c in RANGE_TAB.columns if c != "class"})
+
+DOC.add("Duration subsets and the comparison with 3/2. Cutoff index of each class for all flares and for the flares with at least "
+        f"4 or 5 points, at three lower limits, with the bootstrap by star (B = {SIZES['boot']}) and the 99 per cent interval:")
+DOC.table(DUR_TAB, {"lower limit": "{:.1f}", "tail": "{:.0f}", "alpha": "{:.3f}", "se": "{:.3f}", "99 low": "{:.3f}", "99 high": "{:.3f}",
+                    "p 3/2": "{:.4f}"})
+DOC.add("Bands against 3/2 for the same subsets, with the 99 per cent interval of each valid band:")
+DOC.table(BAND_CI_COUNTS, {"valid bands": "{:.0f}", "CI above 3/2": "{:.0f}", "CI contains 3/2": "{:.0f}", "CI below 3/2": "{:.0f}",
+                           "lowest index": "{:.3f}"})
+DOC.table(BAND_CI, {"band": "{:.0f}", "Teff median": "{:.0f}", "tail": "{:.0f}", "alpha": "{:.3f}", "se": "{:.3f}",
+                    "99 low": "{:.3f}", "99 high": "{:.3f}"})
+DOC.add(f"Permutation test of the whole distribution with and without the scale of each group removed, {PERM_P} permutations. "
+        "The scale is the median of log E_L of the group, recomputed in every permutation. Pairwise p values are corrected with Holm.")
+DOC.table(PERM2_TAB, {"lower limit": "{:.1f}", "stat": "{:.4f}", "p": "{:.4f}", "P": "{:.0f}", "stars": "{:.0f}", "p Holm": "{:.4f}"})
+DOC.add(f"Simulation of the level and the power of the equality test, {SIZES['sim_eq']} replicates for each scatter of the index between "
+        "stars. Window estimator, three classes of 300 stars with a mean of 60 flares, bootstrap with B = 300. Power refers to an index 0.2 higher in one class.")
+DOC.table(V8, {c: "{:.3f}" for c in V8.columns})
+DOC.add(f"Variants with the additional checks included: {VERDICT['variants used']} variants of the classes, {VERDICT['variants with another verdict']} "
+        f"with another verdict ({', '.join(VERDICT_CHANGED_LIST)}). Planned variants alone: {VERDICT_CORE['variants used']}, "
+        f"{VERDICT_CORE['variants with another verdict']} with another verdict. Bands: {BAND_VERDICT['variants used']} variants, "
+        f"{BAND_VERDICT['variants changed']} with another verdict, slope significant in {BAND_VERDICT['slope variants significant']}, "
+        f"sign of the slope changes in {BAND_VERDICT['slope sign changes']}. Planned variants of the bands alone: {BAND_VERDICT_CORE['variants used']}.")
 
 # %% [markdown]
 # ## 16. Figures
@@ -3171,7 +3379,7 @@ def tex_p(p, B):
         return "nan"
     floor = np.ceil(1000.0 / (B + 1)) / 1000.0
     if p <= 1.0 / (B + 1) + 1e-12:
-        return "\\ensuremath{<}" + f"{floor:.3f}"
+        return "\\ensuremath{\\le}" + f"{floor:.3f}"
     return "\\ensuremath{<}0.001" if p < 0.001 else f"{p:.3f}"
 
 
@@ -3317,13 +3525,13 @@ def clean_label(s):
 def write_variant_tables(folder):
     """Bodies of the tables of the sensitivity variants (classes and bands), read by the manuscript."""
     Bv = SIZES["variant"]
-    keep = VAR_TAB.dropna(subset=["verdict"])
+    keep = VAR_ALL.dropna(subset=["verdict"])
     keep = keep[(keep["min tail"] >= MIN_TAIL) | (keep["variant"] == "baseline")]
     items = []
     for _, r in keep.iterrows():
         name = "Baseline" if r["variant"] == "baseline" else clean_label(r["variant"])
         mark = "" if "not rejected" in r["verdict"] else "$^{\\dagger}$"
-        pv = tex_p(float(r["p cutoff"]), B_MAIN if r["variant"] == "baseline" else Bv)
+        pv = tex_p(float(r["p cutoff"]), int(r["B used"]))
         items.append(f"{name}{mark} & {tex_num(r['alpha M'], 2)} & {tex_num(r['alpha K'], 2)} & {tex_num(r['alpha G'], 2)} & {pv} \\\\")
     head = ["\\begin{tabular}{@{}lrrrr@{}}", "\\toprule", "Variant & M & K & G & $p$ \\\\", "\\midrule"]
     foot = ["\\bottomrule", "\\end{tabular}"]
@@ -3331,10 +3539,10 @@ def write_variant_tables(folder):
     Path(folder / "table_variants.tex").write_text("% Rebuilt on every run of the notebook. Do not edit by hand.\n" + "\n".join(body) + "\n",
                                                    encoding="utf-8")
     rows = ["\\begin{tabular}{@{}lrrr@{}}", "\\toprule", "Variant & Bands & $p$ & Slope \\\\", "\\midrule"]
-    for _, r in VBAND_TAB.dropna(subset=["verdict"]).iterrows():
+    for _, r in VBAND_ALL.dropna(subset=["verdict"]).iterrows():
         if r["valid bands"] < 5:
             continue
-        pv = tex_p(float(r["p equality cutoff"]), B_MAIN if r["variant"].startswith("baseline") else Bv)
+        pv = tex_p(float(r["p equality cutoff"]), int(r["B used"]))
         rows.append(f"{clean_label(r['variant'])} & {int(r['valid bands'])} & {pv} & {tex_num(r['slope cutoff'], 3)} \\\\")
     rows += ["\\bottomrule", "\\end{tabular}"]
     Path(folder / "table_bandvariants.tex").write_text("% Rebuilt on every run of the notebook. Do not edit by hand.\n" + "\n".join(rows) + "\n",
@@ -3397,6 +3605,46 @@ for c in PRIMARY_CLASSES:
     macro(f"WindowMax{c}", tex_num(float(_rg.loc[c, "window max"]), 2))
     macro(f"VariantsMin{c}", tex_num(float(_rg.loc[c, "all variants min"]), 2))
     macro(f"VariantsMax{c}", tex_num(float(_rg.loc[c, "all variants max"]), 2))
+
+
+# Second round of additional checks
+macro("NvariantsCore", tex_int(VERDICT_CORE["variants used"]))
+macro("NvariantsCoreChanged", tex_int(VERDICT_CORE["variants with another verdict"]))
+macro("BandsVariantsCore", tex_int(BAND_VERDICT_CORE["variants used"]))
+_dt = DUR_TAB.set_index(["subset", "lower limit", "class"])
+for sub_, tg in (("at least 4 points", "DurFour"), ("at least 5 points", "DurFive")):
+    for lo_, lt in ((34.5, "A"), (34.8, "B"), (35.0, "C")):
+        nrej = 0
+        for c in PRIMARY_CLASSES:
+            r = _dt.loc[(sub_, lo_, c)]
+            macro(f"AlphaSel{tg}Lim{lt}{c}", tex_num(float(r["alpha"]), 2))
+            macro(f"AlphaErrSel{tg}Lim{lt}{c}", tex_num(float(r["se"]), 2))
+            macro(f"RejSel{tg}Lim{lt}{c}", "yes" if bool(r["3/2 rejected"]) else "no")
+            macro(f"TailSel{tg}Lim{lt}{c}", tex_int(r["tail"]))
+            nrej += int(bool(r["3/2 rejected"]))
+        macro(f"RejectThreeHalvesSel{tg}Lim{lt}", tex_int(nrej))
+_bc = BAND_CI_COUNTS.set_index("subset")
+for sub_, tg in (("all flares", "Base"), ("at least 4 points", "DurFour"), ("at least 5 points", "DurFive")):
+    macro(f"BandsAboveCI{tg}", tex_int(_bc.loc[sub_, "CI above 3/2"]))
+    macro(f"BandsStraddleCI{tg}", tex_int(_bc.loc[sub_, "CI contains 3/2"]))
+    macro(f"BandsBelowCI{tg}", tex_int(_bc.loc[sub_, "CI below 3/2"]))
+    macro(f"BandsValidCI{tg}", tex_int(_bc.loc[sub_, "valid bands"]))
+    macro(f"BandLowestAlpha{tg}", tex_num(float(_bc.loc[sub_, "lowest index"]), 2))
+_p2 = PERM2_TAB[(PERM2_TAB["scale"] == "scaled")]
+for lo_, lt in ((XMIN_L, "A"), (34.8, "B")):
+    q = _p2[_p2["lower limit"] == lo_].set_index("test")
+    macro(f"PermScaledClassesLim{lt}", tex_p(float(q.loc["classes M, K, G", "p"]), PERM_P))
+    macro(f"PermScaledBandsLim{lt}", tex_p(float(q.loc["valid bands of Teff", "p"]), PERM_P))
+    macro(f"PermScaledBandsNoHotLim{lt}", tex_p(float(q.loc["valid bands without the hottest", "p"]), PERM_P))
+    for pair, nm in (("pair M and K", "MK"), ("pair M and G", "MG"), ("pair K and G", "KG")):
+        macro(f"PermScaledHolm{nm}Lim{lt}", tex_p(float(q.loc[pair, "p Holm"]), PERM_P))
+macro("SimReps", tex_int(SIZES["sim_eq"]))
+for r_, tg in zip(SIM_ROWS, ("Low", "Mid", "High")):
+    macro(f"SimTau{tg}", tex_num(r_["scatter between stars"], 2))
+    macro(f"SimSizeBoot{tg}", tex_num(r_["size, bootstrap by star"], 2))
+    macro(f"SimSizeWald{tg}", tex_num(r_["size, Wald with independent flares"], 2))
+    macro(f"SimPowerBoot{tg}", tex_num(r_["power, bootstrap by star"], 2))
+    macro(f"SimPowerWald{tg}", tex_num(r_["power, Wald with independent flares"], 2))
 
 
 def write_macros(path):
