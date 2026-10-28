@@ -110,9 +110,9 @@ MIN_TAIL_SCAN = 1000
 VAL_MIN_TAIL = 100
 SIZES = {
     "full": {"recovery": 200, "trunc": 100, "gof_size": 100, "gof_synth": 100, "gof_power": 12, "lr": 100,
-             "preview_gof": 100, "boot": 1000, "variant": 200, "gof_fixed": 200, "valid_eq": 100, "sim_eq": 1000},
+             "preview_gof": 100, "boot": 1000, "variant": 200, "gof_fixed": 200, "valid_eq": 100, "sim_eq": 1000, "sim_cut": 300, "sim_cut_B": 100},
     "fast": {"recovery": 40, "trunc": 20, "gof_size": 20, "gof_synth": 40, "gof_power": 4, "lr": 20,
-             "preview_gof": 20, "boot": 100, "variant": 40, "gof_fixed": 40, "valid_eq": 20, "sim_eq": 40},
+             "preview_gof": 20, "boot": 100, "variant": 40, "gof_fixed": 40, "valid_eq": 20, "sim_eq": 40, "sim_cut": 16, "sim_cut_B": 40},
 }[MODE]
 # Primary analysis on the luminosity-scaled energy
 XMIN_L = 34.5
@@ -2716,6 +2716,11 @@ for lab, smp in cases:
     row, bands = band_row(lab, smp, BX)
     X_BAND.append(row)
     BAND_SETS[lab] = bands
+for _lo in (34.8, 35.0):
+    for _n, _lab in DUR_VARIANTS:
+        _smp = sample_pts[sample_pts["points"] >= _n].reset_index(drop=True)
+        _res = variant_fit(_smp, EXTENDED_CLASSES, _lo, _lo + 1.0, BX, f"x14e-{_n}-{_lo}")
+        X_CLASS.append(variant_row(f"duration {_lab}, limit {_lo}", _res))
 X_CLASS_TAB = pd.DataFrame(X_CLASS)
 X_BAND_TAB = pd.DataFrame(X_BAND)
 DUR_SHARE = pd.DataFrame({"points": sorted(sample_pts["points"].unique())[:6]})
@@ -3029,6 +3034,122 @@ BAND_VERDICT["slope robust"] = bool(BAND_VERDICT["slope variants significant"] =
                                     and BAND_VERDICT["slope sign changes"] == 0)
 pd.DataFrame([VERDICT_CORE, VERDICT]), pd.DataFrame([BAND_VERDICT_CORE, BAND_VERDICT])
 
+# %% [markdown]
+# ### Fit of the window model, level of the test with the cutoff model, and fit ranges of Yang and Liu
+#
+# * The truncated power law of the window is tested against its own fitted
+#   distribution with the Kolmogorov-Smirnov distance and synthetic samples, as is
+#   done for the cutoff model. The test treats flares as independent.
+# * The level of the equality test is simulated with the estimator of the primary
+#   analysis, the power law with an exponential cutoff. Stars have an index of their
+#   own around the class value, and all classes share the cutoff scale of the data.
+# * The index of Yang and Liu is recomputed for a grid of fit ranges, because the
+#   ranges of their fits were read from their figure.
+
+# %%
+def ks_trunc(lx, alpha, L):
+    x = np.sort(lx)
+    n = len(x)
+    u = alpha - 1.0
+    F = (-np.expm1(-u * x)) / (-np.expm1(-u * L))
+    j = np.arange(n)
+    return float(max(np.max((j + 1.0) / n - F), np.max(F - j / n)))
+
+
+def window_gof_one(args):
+    seed, = args
+    sh = _SHARED
+    rng = np.random.default_rng(seed)
+    lx = np.log(draw_tail(rng, sh["n"], sh["alpha"], 1.0, xmax=np.exp(sh["L"])))
+    a = 1.0 + solve_u_truncated(lx.mean(), sh["L"])
+    return ks_trunc(lx, a, sh["L"])
+
+
+def gof_window(sample, c, lo, hi, n_synth, seed):
+    d = sample.loc[(sample["cls"] == c) & (sample["logEL"] >= lo) & (sample["logEL"] < hi), "logEL"].to_numpy(float)
+    lx = (d - lo) * LN10
+    L = (hi - lo) * LN10
+    a = 1.0 + solve_u_truncated(lx.mean(), L)
+    d_obs = ks_trunc(lx, a, L)
+    ss = np.random.SeedSequence(seed).spawn(n_synth)
+    seeds = [(int(q.generate_state(1)[0]),) for q in ss]
+    ks = parallel_map(window_gof_one, seeds, N_JOBS, shared={"alpha": a, "n": len(lx), "L": L})
+    return {"KS D": d_obs, "p": float(np.mean(np.array(ks) >= d_obs)), "n": len(lx)}
+
+
+GOF_W = pd.DataFrame([{"class": c, **gof_window(sampleL, c, WINDOW_L[0], WINDOW_L[1], SIZES["gof_fixed"], seed_for(f"gofw-{c}"))}
+                      for c in PRIMARY_CLASSES])
+
+
+def sim_cutoff_units(rng, alpha, kappa, tau, n_stars=300, mean_flares=30.0):
+    n_i = rng.poisson(rng.lognormal(np.log(mean_flares) - 0.5, 1.0, n_stars))
+    a_i = np.clip(alpha + tau * rng.standard_normal(n_stars), 1.2, None)
+    a_rep = np.repeat(a_i, n_i)
+    out = np.empty(len(a_rep))
+    todo = np.arange(len(a_rep))
+    while len(todo):
+        r = (1.0 - rng.random(len(todo))) ** (-1.0 / (a_rep[todo] - 1.0))
+        ok = rng.random(len(todo)) < np.exp(-kappa * (r - 1.0))
+        out[todo[ok]] = r[ok]
+        todo = todo[~ok]
+    star = np.repeat(np.arange(n_stars), n_i)
+    return np.column_stack([n_i.astype(float), np.bincount(star, weights=np.log(out), minlength=n_stars),
+                            np.bincount(star, weights=out, minlength=n_stars)])
+
+
+def cutoff_replicate(args):
+    seed, = args
+    sh = _SHARED
+    rng = np.random.default_rng(seed)
+    ah, ab = [], []
+    for a_c in sh["alphas"]:
+        U = sim_cutoff_units(rng, a_c, sh["kappa"], sh["tau"])
+        K = len(U)
+        fit = fit_m3_sums(*U.sum(axis=0))
+        Sb = rng.multinomial(K, np.full(K, 1.0 / K), size=sh["B"]) @ U
+        lk0 = np.log(fit["kappa"])
+        ab.append([m3_boot_one((Sb[i, 0], Sb[i, 1], Sb[i, 2], fit["alpha"], lk0))[0] for i in range(sh["B"])])
+        ah.append(fit["alpha"])
+    eq = equality_test(ah, np.array(ab).T, ["a", "b", "c"], pairs=False)
+    return int(eq["p_boot"] < ALPHA_TEST)
+
+
+SIM_CUT_TAU = 0.25
+SIM_CUT_KAPPA = float(np.median([PRIMARY[c]["kappa"] for c in PRIMARY_CLASSES]))
+SIM_CUT_ROWS = []
+for _lab, _alphas in (("same index, size at 0.05", (2.0, 2.0, 2.0)), ("index 0.2 higher in one class, power", (2.0, 2.0, 2.2))):
+    _ss = np.random.SeedSequence(seed_for("simcut-" + _lab)).spawn(SIZES["sim_cut"])
+    _seeds = [(int(q.generate_state(1)[0]),) for q in _ss]
+    _rej = parallel_map(cutoff_replicate, _seeds, N_JOBS,
+                        shared={"alphas": _alphas, "kappa": SIM_CUT_KAPPA, "tau": SIM_CUT_TAU, "B": SIZES["sim_cut_B"]})
+    SIM_CUT_ROWS.append({"scenario": _lab, "rejection rate": float(np.mean(_rej)), "replicates": SIZES["sim_cut"]})
+SIM_CUT = pd.DataFrame(SIM_CUT_ROWS)
+record_validation("equality test with the cutoff model keeps its size with correlated flares",
+                  0.02 <= SIM_CUT_ROWS[0]["rejection rate"] <= 0.12,
+                  f"rejection rate {SIM_CUT_ROWS[0]['rejection rate']:.3f} at 0.05, scatter {SIM_CUT_TAU}, {SIZES['sim_cut']} replicates, "
+                  f"bootstrap with B = {SIZES['sim_cut_B']}")
+
+YANG_GRID_ROWS = []
+for _c in ("M", "K", "G", "F"):
+    _lg = yang_smp.loc[yang_smp["cls"] == _c, "logE"].to_numpy(float)
+    for _lo in np.arange(33.0, 34.76, 0.25):
+        for _hi in (34.5, 35.0, 35.5, 36.0, 36.5):
+            if _hi - _lo >= 1.0:
+                YANG_GRID_ROWS.append({"class": _c, "lo": float(_lo), "hi": float(_hi),
+                                       "alpha": yang_index(_lg, float(_lo), float(_hi), 0.25)[0]})
+YANG_GRID = pd.DataFrame(YANG_GRID_ROWS)
+_yrows = []
+for _c in ("M", "K", "G", "F"):
+    g = YANG_GRID[YANG_GRID["class"] == _c]
+    pub = yang_published[_c]
+    best = g.iloc[int(np.argmin(np.abs(g["alpha"] - pub)))]
+    _yrows.append({"class": _c, "published": pub, "grid min": float(g["alpha"].min()), "grid max": float(g["alpha"].max()),
+                   "ranges within 0.05": int((np.abs(g["alpha"] - pub) <= 0.05).sum()), "ranges in grid": int(len(g)),
+                   "closest range": f"{best['lo']:.2f} to {best['hi']:.2f}", "closest index": float(best["alpha"]),
+                   "closest lo": float(best["lo"]), "closest hi": float(best["hi"])})
+YANG_SCAN = pd.DataFrame(_yrows)
+GOF_W, SIM_CUT, YANG_SCAN
+
 # %%
 DOC.section("15. Additional checks")
 DOC.add("Common minimum duration. The shortest flare of the catalog has three points above the threshold. Share of the flares "
@@ -3073,6 +3194,19 @@ DOC.add(f"Variants with the additional checks included: {VERDICT['variants used'
         f"{VERDICT_CORE['variants with another verdict']} with another verdict. Bands: {BAND_VERDICT['variants used']} variants, "
         f"{BAND_VERDICT['variants changed']} with another verdict, slope significant in {BAND_VERDICT['slope variants significant']}, "
         f"sign of the slope changes in {BAND_VERDICT['slope sign changes']}. Planned variants of the bands alone: {BAND_VERDICT_CORE['variants used']}.")
+
+DOC.add("Fit of the truncated power law of the window, Kolmogorov-Smirnov distance against the fitted model with "
+        f"{SIZES['gof_fixed']} synthetic samples. The test treats flares as independent:")
+DOC.table(GOF_W, {"KS D": "{:.4f}", "p": "{:.3f}", "n": "{:.0f}"})
+DOC.add("Level and power of the equality test with the power law with an exponential cutoff. Three classes of 300 stars, a mean of 30 flares "
+        f"per star, a scatter of the index between stars of {SIM_CUT_TAU}, cutoff scale of the data (E_min / E_c = {SIM_CUT_KAPPA:.2f}), "
+        f"bootstrap with B = {SIZES['sim_cut_B']}. Power refers to an index 0.2 higher in one class:")
+DOC.table(SIM_CUT, {"rejection rate": "{:.3f}", "replicates": "{:.0f}"})
+DOC.add("Index of Yang and Liu recomputed with the method of their paper (bisector of the least squares lines on the differential histogram, "
+        "0.25 dex bins) for a grid of fit ranges, lower edge from 33.0 to 34.75 and upper edge from 34.5 to 36.5, at least 1 dex wide:")
+DOC.table(YANG_SCAN.drop(columns=["closest lo", "closest hi"]), {"published": "{:.2f}", "grid min": "{:.2f}", "grid max": "{:.2f}",
+                                                                 "ranges within 0.05": "{:.0f}", "ranges in grid": "{:.0f}",
+                                                                 "closest index": "{:.2f}"})
 
 # %% [markdown]
 # ## 16. Figures
@@ -3522,6 +3656,21 @@ def clean_label(s):
     return s[0].upper() + s[1:]
 
 
+def no32_mark(variant, cls):
+    """Marker for an index whose 99 per cent bootstrap interval contains 3/2, from the duration table."""
+    keymap = {"baseline": ("all flares", 34.5), "S5 window 34.8 to 35.6": ("all flares", 34.8),
+              "S5 window 35.0 to 36.0": ("all flares", 35.0), "duration at least 4 points": ("at least 4 points", 34.5),
+              "duration at least 5 points": ("at least 5 points", 34.5)}
+    for n_ in (4, 5):
+        for lo_ in (34.8, 35.0):
+            keymap[f"duration at least {n_} points, limit {lo_}"] = (f"at least {n_} points", lo_)
+    k = keymap.get(variant)
+    if k is None:
+        return ""
+    r_ = DUR_TAB[(DUR_TAB["subset"] == k[0]) & (DUR_TAB["lower limit"] == k[1]) & (DUR_TAB["class"] == cls)]
+    return "$^{\\ddagger}$" if len(r_) and not bool(r_["3/2 rejected"].iloc[0]) else ""
+
+
 def write_variant_tables(folder):
     """Bodies of the tables of the sensitivity variants (classes and bands), read by the manuscript."""
     Bv = SIZES["variant"]
@@ -3532,7 +3681,9 @@ def write_variant_tables(folder):
         name = "Baseline" if r["variant"] == "baseline" else clean_label(r["variant"])
         mark = "" if "not rejected" in r["verdict"] else "$^{\\dagger}$"
         pv = tex_p(float(r["p cutoff"]), int(r["B used"]))
-        items.append(f"{name}{mark} & {tex_num(r['alpha M'], 2)} & {tex_num(r['alpha K'], 2)} & {tex_num(r['alpha G'], 2)} & {pv} \\\\")
+        m3 = {c_: no32_mark(r["variant"], c_) for c_ in PRIMARY_CLASSES}
+        items.append(f"{name}{mark} & {tex_num(r['alpha M'], 2)}{m3['M']} & {tex_num(r['alpha K'], 2)}{m3['K']} & "
+                     f"{tex_num(r['alpha G'], 2)}{m3['G']} & {pv} \\\\")
     head = ["\\begin{tabular}{@{}lrrrr@{}}", "\\toprule", "Variant & M & K & G & $p$ \\\\", "\\midrule"]
     foot = ["\\bottomrule", "\\end{tabular}"]
     body = head + items + foot
@@ -3583,7 +3734,7 @@ macro("ShareThreePoints", tex_num(float(DUR_SHARE.loc[DUR_SHARE["points"] == 3, 
 _nh = NOHOT_TAB[NOHOT_TAB["bands"] == "12 bands"].set_index("estimator")
 for est, nm in (("cutoff", "Cut"), ("window", "Win"), ("pure", "One")):
     macro(f"ChiBandsNoHot{nm}", tex_num(float(_nh.loc[est, "statistic"]), 1))
-    macro(f"PEqualBandsNoHot{nm}", tex_p(float(_nh.loc[est, "p bootstrap"]), BX))
+    macro(f"PEqualBandsNoHot{nm}", tex_p(float(_nh.loc[est, "p bootstrap"]), B_MAIN))
 macro("DofBandsNoHot", tex_int(_nh.iloc[0]["dof"]))
 macro("NbandsNoHot", tex_int(_nh.iloc[0]["valid bands"]))
 macro("NoHotAllReject", "yes" if bool((NOHOT_TAB["p bootstrap"] < ALPHA_TEST).all()) else "no")
@@ -3645,6 +3796,31 @@ for r_, tg in zip(SIM_ROWS, ("Low", "Mid", "High")):
     macro(f"SimSizeWald{tg}", tex_num(r_["size, Wald with independent flares"], 2))
     macro(f"SimPowerBoot{tg}", tex_num(r_["power, bootstrap by star"], 2))
     macro(f"SimPowerWald{tg}", tex_num(r_["power, Wald with independent flares"], 2))
+
+
+# Third round of checks
+macro("BootBVariant", tex_int(SIZES["variant"]))
+_uw = VAR_ALL.dropna(subset=["verdict"])
+_uw = _uw[(_uw["min tail"] >= MIN_TAIL) & (_uw["variant"] != "baseline")]
+macro("NvariantsWindowRejects", tex_int(int((_uw["p window"] < ALPHA_TEST).sum())))
+macro("NvariantsWindowTotal", tex_int(len(_uw)))
+for _, r_ in GOF_W.iterrows():
+    macro(f"GofWinD{r_['class']}", tex_num(float(r_["KS D"]), 3))
+    macro(f"GofWin{r_['class']}", tex_p(float(r_["p"]), SIZES["gof_fixed"]))
+macro("SimCutReps", tex_int(SIZES["sim_cut"]))
+macro("SimCutB", tex_int(SIZES["sim_cut_B"]))
+macro("SimCutTau", tex_num(SIM_CUT_TAU, 2))
+macro("SimCutSize", tex_num(float(SIM_CUT.loc[0, "rejection rate"]), 2))
+macro("SimCutPower", tex_num(float(SIM_CUT.loc[1, "rejection rate"]), 2))
+for _, r_ in YANG_SCAN.iterrows():
+    c_ = r_["class"]
+    macro(f"YangScanMin{c_}", tex_num(float(r_["grid min"]), 2))
+    macro(f"YangScanMax{c_}", tex_num(float(r_["grid max"]), 2))
+    macro(f"YangScanNear{c_}", tex_int(r_["ranges within 0.05"]))
+    macro(f"YangScanN{c_}", tex_int(r_["ranges in grid"]))
+    macro(f"YangScanClosestLo{c_}", tex_num(float(r_["closest lo"]), 2))
+    macro(f"YangScanClosestHi{c_}", tex_num(float(r_["closest hi"]), 2))
+    macro(f"YangScanClosest{c_}", tex_num(float(r_["closest index"]), 2))
 
 
 def write_macros(path):

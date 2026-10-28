@@ -1,5 +1,5 @@
 % Numbers of the analysis, rebuilt on every run of the notebook. Do not edit by hand.
-% Run started (UTC): 2026-10-23 21:37:26, mode: full, seed: 20261012
+% Run started (UTC): 2026-10-24 01:25:20, mode: full, seed: 20261012
 % Data checksums (sha256):
 % J/ApJS/241/29/table2 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4
 % J/ApJS/241/29/table1 bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d
@@ -123,6 +123,7 @@
 \newcommand{\BandsVariantsCore}{11}
 \newcommand{\BandsVariantsUsed}{16}
 \newcommand{\BootB}{1000}
+\newcommand{\BootBVariant}{200}
 \newcommand{\ChiBandsCutConst}{75.7}
 \newcommand{\ChiBandsCutLine}{69.0}
 \newcommand{\ChiBandsCutStep}{21.5}
@@ -169,6 +170,12 @@
 \newcommand{\GofCutG}{\ensuremath{\le}0.005}
 \newcommand{\GofCutK}{\ensuremath{\le}0.005}
 \newcommand{\GofCutM}{\ensuremath{\le}0.005}
+\newcommand{\GofWinDG}{0.020}
+\newcommand{\GofWinDK}{0.017}
+\newcommand{\GofWinDM}{0.019}
+\newcommand{\GofWinG}{\ensuremath{\le}0.005}
+\newcommand{\GofWinK}{\ensuremath{\le}0.005}
+\newcommand{\GofWinM}{\ensuremath{\le}0.005}
 \newcommand{\HetScatterG}{0.47}
 \newcommand{\HetScatterK}{0.25}
 \newcommand{\HetScatterM}{0.22}
@@ -224,8 +231,10 @@
 \newcommand{\NvariantsChanged}{5}
 \newcommand{\NvariantsCore}{26}
 \newcommand{\NvariantsCoreChanged}{4}
-\newcommand{\NvariantsSameVerdict}{25}
-\newcommand{\NvariantsTotal}{30}
+\newcommand{\NvariantsSameVerdict}{29}
+\newcommand{\NvariantsTotal}{34}
+\newcommand{\NvariantsWindowRejects}{34}
+\newcommand{\NvariantsWindowTotal}{34}
 \newcommand{\NwindowF}{1859}
 \newcommand{\NwindowG}{7951}
 \newcommand{\NwindowK}{23593}
@@ -233,9 +242,9 @@
 \newcommand{\PEqualBandsCut}{\ensuremath{\le}0.001}
 \newcommand{\PEqualBandsDurFive}{\ensuremath{\le}0.005}
 \newcommand{\PEqualBandsDurFour}{\ensuremath{\le}0.005}
-\newcommand{\PEqualBandsNoHotCut}{\ensuremath{\le}0.005}
-\newcommand{\PEqualBandsNoHotOne}{\ensuremath{\le}0.005}
-\newcommand{\PEqualBandsNoHotWin}{\ensuremath{\le}0.005}
+\newcommand{\PEqualBandsNoHotCut}{\ensuremath{\le}0.001}
+\newcommand{\PEqualBandsNoHotOne}{\ensuremath{\le}0.001}
+\newcommand{\PEqualBandsNoHotWin}{\ensuremath{\le}0.001}
 \newcommand{\PEqualBandsOne}{\ensuremath{\le}0.001}
 \newcommand{\PEqualBandsTeffOnly}{\ensuremath{\le}0.005}
 \newcommand{\PEqualBandsTeffOnlyDurFour}{\ensuremath{\le}0.005}
@@ -328,6 +337,11 @@
 \newcommand{\ShareFourPointsK}{0.85}
 \newcommand{\ShareFourPointsM}{0.86}
 \newcommand{\ShareThreePoints}{0.41}
+\newcommand{\SimCutB}{100}
+\newcommand{\SimCutPower}{1.00}
+\newcommand{\SimCutReps}{300}
+\newcommand{\SimCutSize}{0.04}
+\newcommand{\SimCutTau}{0.25}
 \newcommand{\SimPowerBootHigh}{0.92}
 \newcommand{\SimPowerBootLow}{1.00}
 \newcommand{\SimPowerBootMid}{1.00}
@@ -399,3 +413,31 @@
 \newcommand{\YangReproG}{1.73}
 \newcommand{\YangReproK}{1.61}
 \newcommand{\YangReproM}{2.24}
+\newcommand{\YangScanClosestF}{2.11}
+\newcommand{\YangScanClosestG}{1.84}
+\newcommand{\YangScanClosestHiF}{36.50}
+\newcommand{\YangScanClosestHiG}{36.50}
+\newcommand{\YangScanClosestHiK}{36.00}
+\newcommand{\YangScanClosestHiM}{35.00}
+\newcommand{\YangScanClosestK}{1.65}
+\newcommand{\YangScanClosestLoF}{34.50}
+\newcommand{\YangScanClosestLoG}{34.75}
+\newcommand{\YangScanClosestLoK}{34.75}
+\newcommand{\YangScanClosestLoM}{33.00}
+\newcommand{\YangScanClosestM}{2.13}
+\newcommand{\YangScanMaxF}{2.22}
+\newcommand{\YangScanMaxG}{1.84}
+\newcommand{\YangScanMaxK}{1.65}
+\newcommand{\YangScanMaxM}{3.32}
+\newcommand{\YangScanMinF}{\ensuremath{-}1.23}
+\newcommand{\YangScanMinG}{0.51}
+\newcommand{\YangScanMinK}{1.29}
+\newcommand{\YangScanMinM}{2.01}
+\newcommand{\YangScanNF}{31}
+\newcommand{\YangScanNG}{31}
+\newcommand{\YangScanNK}{31}
+\newcommand{\YangScanNM}{31}
+\newcommand{\YangScanNearF}{1}
+\newcommand{\YangScanNearG}{0}
+\newcommand{\YangScanNearK}{0}
+\newcommand{\YangScanNearM}{2}

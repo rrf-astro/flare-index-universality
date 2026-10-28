@@ -1,7 +1,7 @@
 
 ## 1. Run header
 
-Run started (UTC): 2026-10-23 21:37:26
+Run started (UTC): 2026-10-24 01:25:20
 
 Mode: full
 
@@ -13,9 +13,9 @@ Data sources:
 
 | catalog | rows | accessed_utc | source | sha256 |
 |---|---|---|---|---|
-| J/ApJS/241/29/table2 | 162262 | 2026-10-23 21:37:31 | local cache of an earlier VizieR download | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
-| J/ApJS/241/29/table1 | 3420 | 2026-10-23 21:37:32 | local cache of an earlier VizieR download | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
-| J/ApJS/229/30/catalog | 197096 | 2026-10-23 21:37:32 | local cache of an earlier VizieR download | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
+| J/ApJS/241/29/table2 | 162262 | 2026-10-24 01:25:55 | VizieR | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
+| J/ApJS/241/29/table1 | 3420 | 2026-10-24 01:25:59 | VizieR | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
+| J/ApJS/229/30/catalog | 197096 | 2026-10-24 01:26:53 | VizieR | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
 
 
 ## 2. Data integrity
@@ -146,8 +146,8 @@ Maximum likelihood fits with xmin from the KS distance. M1 is the pure power law
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | M | M1 | 44151 | 2490 | 33.58 | 2.352 | 0.027 | 0.0285 | 0.00 | -14.9 | 0.001 | -19.8 | 3.16e-10 |
 | M | M2 | 44151 | 2490 | 33.58 | 2.297 | 0.026 | 0.0192 | 0.00 | 4.1 | 0.314 | -19.8 | 3.16e-10 |
-| K | M1 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.802 | 0.0 | 1 |
-| K | M2 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.803 | 0.0 | 0.998 |
+| K | M1 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.802 | 0.0 | 0.997 |
+| K | M2 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.803 | 0.0 | 0.997 |
 | G | M1 | 22508 | 2734 | 34.70 | 2.516 | 0.029 | 0.0259 | 0.00 | -13.3 | 0.003 | -13.1 | 3.12e-07 |
 | G | M2 | 22508 | 2734 | 34.70 | 2.491 | 0.029 | 0.0219 | 0.00 | -6.2 | 0.157 | -13.1 | 3.12e-07 |
 | F | M1 | 8938 | 3506 | 34.46 | 2.072 | 0.018 | 0.0261 | 0.00 | -28.8 | 0.000 | -38.0 | 2.85e-18 |
@@ -180,18 +180,18 @@ Grid and full scan of xmin on random subsamples of 8000 flares, and alpha from t
 
 | class | points | alpha grid | alpha full scan | log10 xmin grid | log10 xmin full | alpha powerlaw | Hill error | full scan seconds |
 |---|---|---|---|---|---|---|---|---|
-| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.2 |
-| K | 8000 | 2.345 | 2.345 | 34.32 | 34.32 | 2.345 | 0.042 | 0.3 |
-| G | 8000 | 2.387 | 2.390 | 34.50 | 34.50 | 2.387 | 0.033 | 0.2 |
-| F | 8000 | 2.059 | 2.058 | 34.44 | 34.44 | 2.059 | 0.019 | 0.2 |
+| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.4 |
+| K | 8000 | 2.345 | 2.345 | 34.32 | 34.32 | 2.345 | 0.042 | 0.4 |
+| G | 8000 | 2.387 | 2.390 | 34.50 | 34.50 | 2.387 | 0.033 | 0.3 |
+| F | 8000 | 2.059 | 2.058 | 34.44 | 34.44 | 2.059 | 0.019 | 0.3 |
 
-Run time planning from the fit time on 60000 points (M1 0.06 s, M2 0.10 s):
+Run time planning from the fit time on 60000 points (M1 0.10 s, M2 0.09 s):
 
 | task | estimated minutes (serial) | estimated minutes (parallel) |
 |---|---|---|
-| bootstrap, one class, B = 1000 | 1.7 | 0.4 |
-| all four classes, B = 1000 | 6.8 | 1.7 |
-| equality test calibration, B_NULL = 500, four classes | 3.4 | 0.8 |
+| bootstrap, one class, B = 1000 | 1.6 | 0.8 |
+| all four classes, B = 1000 | 6.3 | 3.2 |
+| equality test calibration, B_NULL = 500, four classes | 3.2 | 1.6 |
 
 
 ## 7. Luminosity-scaled energy
@@ -530,6 +530,10 @@ Classes with a common minimum duration and with the scale that uses Teff alone, 
 | duration at least 5 points | 1.777 | 1.698 | 1.568 | 1.942 | 0.030 | 0.005 | 0.209 | 5095 | H0 rejected |
 | scale by Teff only | 1.937 | 1.967 | 2.000 | 2.447 | 0.622 | 0.005 | 0.063 | 7986 | H0 not rejected |
 | scale by Teff only, duration at least 4 points | 1.840 | 1.881 | 1.853 | 2.311 | 0.925 | 0.005 | 0.041 | 6762 | H0 not rejected |
+| duration at least 4 points, limit 34.8 | 2.126 | 2.077 | 2.083 | 2.511 | 0.801 | 0.005 | 0.049 | 3450 | H0 not rejected |
+| duration at least 5 points, limit 34.8 | 2.058 | 1.983 | 1.893 | 2.402 | 0.438 | 0.005 | 0.165 | 2833 | H0 not rejected |
+| duration at least 4 points, limit 35.0 | 2.251 | 2.239 | 2.132 | 2.757 | 0.701 | 0.005 | 0.119 | 1906 | H0 not rejected |
+| duration at least 5 points, limit 35.0 | 2.226 | 2.181 | 1.971 | 2.658 | 0.353 | 0.005 | 0.255 | 1671 | H0 not rejected |
 
 Twelve bands with the same variants, B = 200 resamplings:
 
@@ -551,7 +555,7 @@ Equality of the index across the bands after dropping the hottest valid band:
 | 8 bands | cutoff | 6214 | 1209 | 7 | 49.8 | 6 | 0.0050 | 5.11e-09 |
 | 8 bands | window | 6214 | 1209 | 7 | 50.2 | 6 | 0.0050 | 4.28e-09 |
 | 8 bands | pure | 6214 | 1209 | 7 | 46.7 | 6 | 0.0050 | 2.2e-08 |
-| 16 bands | cutoff | 5926 | 1550 | 13 | 41.1 | 12 | 0.0050 | 4.8e-05 |
+| 16 bands | cutoff | 5926 | 1550 | 13 | 41.0 | 12 | 0.0050 | 4.96e-05 |
 | 16 bands | window | 5926 | 1550 | 13 | 57.6 | 12 | 0.0050 | 6.18e-08 |
 | 16 bands | pure | 5926 | 1550 | 13 | 78.9 | 12 | 0.0050 | 6.83e-12 |
 
@@ -610,7 +614,7 @@ Duration subsets and the comparison with 3/2. Cutoff index of each class for all
 | at least 4 points | 34.8 | K | 12428 | 2.077 | 0.163 | 1.684 | 2.172 | True | 0.0010 |
 | at least 4 points | 34.8 | G | 3450 | 2.083 | 0.096 | 1.808 | 2.311 | True | 0.0010 |
 | at least 4 points | 35.0 | M | 4009 | 2.251 | 0.047 | 2.115 | 2.352 | True | 0.0010 |
-| at least 4 points | 35.0 | K | 7903 | 2.239 | 0.200 | 1.711 | 2.312 | True | 0.0010 |
+| at least 4 points | 35.0 | K | 7903 | 2.239 | 0.200 | 1.711 | 2.311 | True | 0.0010 |
 | at least 4 points | 35.0 | G | 1906 | 2.132 | 0.133 | 1.802 | 2.461 | True | 0.0010 |
 | at least 5 points | 34.5 | M | 9728 | 1.777 | 0.049 | 1.638 | 1.876 | True | 0.0010 |
 | at least 5 points | 34.5 | K | 16443 | 1.698 | 0.157 | 1.362 | 1.863 | False | 0.3756 |
@@ -702,7 +706,31 @@ Simulation of the level and the power of the equality test, 1000 replicates for 
 | 0.250 | 0.070 | 0.515 | 0.999 | 1.000 |
 | 0.450 | 0.047 | 0.750 | 0.923 | 1.000 |
 
-Variants with the additional checks included: 30 variants of the classes, 5 with another verdict (S5 window 34.3 to 35.3, S2 Yang class limits, S2 limits minus 200 K, S4 energy of G times 1.25, duration at least 5 points). Planned variants alone: 26, 4 with another verdict. Bands: 16 variants, 0 with another verdict, slope significant in 13, sign of the slope changes in 2. Planned variants of the bands alone: 11.
+Variants with the additional checks included: 34 variants of the classes, 5 with another verdict (S5 window 34.3 to 35.3, S2 Yang class limits, S2 limits minus 200 K, S4 energy of G times 1.25, duration at least 5 points). Planned variants alone: 26, 4 with another verdict. Bands: 16 variants, 0 with another verdict, slope significant in 13, sign of the slope changes in 2. Planned variants of the bands alone: 11.
+
+Fit of the truncated power law of the window, Kolmogorov-Smirnov distance against the fitted model with 200 synthetic samples. The test treats flares as independent:
+
+| class | KS D | p | n |
+|---|---|---|---|
+| M | 0.0186 | 0.000 | 13590 |
+| K | 0.0169 | 0.000 | 23593 |
+| G | 0.0202 | 0.000 | 7951 |
+
+Level and power of the equality test with the power law with an exponential cutoff. Three classes of 300 stars, a mean of 30 flares per star, a scatter of the index between stars of 0.25, cutoff scale of the data (E_min / E_c = 0.01), bootstrap with B = 100. Power refers to an index 0.2 higher in one class:
+
+| scenario | rejection rate | replicates |
+|---|---|---|
+| same index, size at 0.05 | 0.040 | 300 |
+| index 0.2 higher in one class, power | 1.000 | 300 |
+
+Index of Yang and Liu recomputed with the method of their paper (bisector of the least squares lines on the differential histogram, 0.25 dex bins) for a grid of fit ranges, lower edge from 33.0 to 34.75 and upper edge from 34.5 to 36.5, at least 1 dex wide:
+
+| class | published | grid min | grid max | ranges within 0.05 | ranges in grid | closest range | closest index |
+|---|---|---|---|---|---|---|---|
+| M | 2.13 | 2.01 | 3.32 | 2 | 31 | 33.00 to 35.00 | 2.13 |
+| K | 1.78 | 1.29 | 1.65 | 0 | 31 | 34.75 to 36.00 | 1.65 |
+| G | 1.96 | 0.51 | 1.84 | 0 | 31 | 34.75 to 36.50 | 1.84 |
+| F | 2.11 | -1.23 | 2.22 | 1 | 31 | 34.50 to 36.50 | 2.11 |
 
 
 ## 17. Figures
@@ -774,3 +802,4 @@ Files in the folder figures, in EPS and PDF. Figure 1 shows the complementary di
 | band trend test keeps its size without a trend | ok | rejection rate 0.07 at 0.05 |
 | band equality test detects a trend of 0.1 per 1000 K | ok | rejection rate 1.00, and 1.00 for the trend test |
 | slope of the index in Teff is recovered | ok | mean bias 0.001 without trend and -0.001 with a trend of 0.1 per 1000 K |
+| equality test with the cutoff model keeps its size with correlated flares | ok | rejection rate 0.040 at 0.05, scatter 0.25, 300 replicates, bootstrap with B = 100 |
