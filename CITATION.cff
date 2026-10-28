@@ -2,10 +2,17 @@ cff-version: 1.2.0
 message: "If you use this code or its results, please cite the Letter and this repository."
 title: "Code and results for: Is the power-law index of flare energies universal across M, K and G dwarfs?"
 type: software
+# Para completar: given-names por extenso e orcid de cada autor, se desejado.
 authors:
   - family-names: Ferreira
     given-names: "R. R."
-    affiliation: "Instituto Federal do Triângulo Mineiro (IFTM), Brazil"
+    affiliation: "Instituto Federal do Triângulo Mineiro, Brazil"
+  - family-names: Machado
+    given-names: "J. M."
+    affiliation: "Instituto Federal Catarinense, Brazil"
+  - family-names: Borin
+    given-names: "A. M. S."
+    affiliation: "Instituto Federal do Triângulo Mineiro, Brazil"
 license: MIT
 repository-code: "https://github.com/rrf-astro/flare-index-universality"
 keywords:
