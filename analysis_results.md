@@ -1,7 +1,7 @@
 
 ## 1. Run header
 
-Run started (UTC): 2026-10-24 01:25:20
+Run started (UTC): 2026-11-02 02:35:38
 
 Mode: full
 
@@ -13,9 +13,9 @@ Data sources:
 
 | catalog | rows | accessed_utc | source | sha256 |
 |---|---|---|---|---|
-| J/ApJS/241/29/table2 | 162262 | 2026-10-24 01:25:55 | VizieR | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
-| J/ApJS/241/29/table1 | 3420 | 2026-10-24 01:25:59 | VizieR | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
-| J/ApJS/229/30/catalog | 197096 | 2026-10-24 01:26:53 | VizieR | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
+| J/ApJS/241/29/table2 | 162262 | 2026-11-02 02:35:41 | local cache of an earlier VizieR download | 78a080286f8ed6b1ef3122342bd4a80ad599d93215ac64c4a5f181007d50e9b4 |
+| J/ApJS/241/29/table1 | 3420 | 2026-11-02 02:35:42 | local cache of an earlier VizieR download | bf0dd52df3f5900f87be0dbabfdfe19fac01d7ac7ffd911ed5f93e26b323224d |
+| J/ApJS/229/30/catalog | 197096 | 2026-11-02 02:35:42 | local cache of an earlier VizieR download | 607e868585f0e92e3ad56e34f98e6d836413ea5368b29d9151fe39326d2149e8 |
 
 
 ## 2. Data integrity
@@ -146,8 +146,8 @@ Maximum likelihood fits with xmin from the KS distance. M1 is the pure power law
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | M | M1 | 44151 | 2490 | 33.58 | 2.352 | 0.027 | 0.0285 | 0.00 | -14.9 | 0.001 | -19.8 | 3.16e-10 |
 | M | M2 | 44151 | 2490 | 33.58 | 2.297 | 0.026 | 0.0192 | 0.00 | 4.1 | 0.314 | -19.8 | 3.16e-10 |
-| K | M1 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.802 | 0.0 | 0.997 |
-| K | M2 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.803 | 0.0 | 0.997 |
+| K | M1 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.802 | 0.0 | 1 |
+| K | M2 | 62553 | 1873 | 34.82 | 2.731 | 0.040 | 0.0334 | 0.00 | -0.7 | 0.803 | 0.0 | 0.998 |
 | G | M1 | 22508 | 2734 | 34.70 | 2.516 | 0.029 | 0.0259 | 0.00 | -13.3 | 0.003 | -13.1 | 3.12e-07 |
 | G | M2 | 22508 | 2734 | 34.70 | 2.491 | 0.029 | 0.0219 | 0.00 | -6.2 | 0.157 | -13.1 | 3.12e-07 |
 | F | M1 | 8938 | 3506 | 34.46 | 2.072 | 0.018 | 0.0261 | 0.00 | -28.8 | 0.000 | -38.0 | 2.85e-18 |
@@ -180,18 +180,18 @@ Grid and full scan of xmin on random subsamples of 8000 flares, and alpha from t
 
 | class | points | alpha grid | alpha full scan | log10 xmin grid | log10 xmin full | alpha powerlaw | Hill error | full scan seconds |
 |---|---|---|---|---|---|---|---|---|
-| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.4 |
-| K | 8000 | 2.345 | 2.345 | 34.32 | 34.32 | 2.345 | 0.042 | 0.4 |
+| M | 8000 | 2.197 | 2.191 | 33.14 | 33.13 | 2.197 | 0.033 | 0.3 |
+| K | 8000 | 2.345 | 2.345 | 34.32 | 34.32 | 2.345 | 0.042 | 0.3 |
 | G | 8000 | 2.387 | 2.390 | 34.50 | 34.50 | 2.387 | 0.033 | 0.3 |
 | F | 8000 | 2.059 | 2.058 | 34.44 | 34.44 | 2.059 | 0.019 | 0.3 |
 
-Run time planning from the fit time on 60000 points (M1 0.10 s, M2 0.09 s):
+Run time planning from the fit time on 60000 points (M1 0.08 s, M2 0.13 s):
 
 | task | estimated minutes (serial) | estimated minutes (parallel) |
 |---|---|---|
-| bootstrap, one class, B = 1000 | 1.6 | 0.8 |
-| all four classes, B = 1000 | 6.3 | 3.2 |
-| equality test calibration, B_NULL = 500, four classes | 3.2 | 1.6 |
+| bootstrap, one class, B = 1000 | 2.2 | 0.6 |
+| all four classes, B = 1000 | 8.9 | 2.2 |
+| equality test calibration, B_NULL = 500, four classes | 4.4 | 1.1 |
 
 
 ## 7. Luminosity-scaled energy
@@ -555,7 +555,7 @@ Equality of the index across the bands after dropping the hottest valid band:
 | 8 bands | cutoff | 6214 | 1209 | 7 | 49.8 | 6 | 0.0050 | 5.11e-09 |
 | 8 bands | window | 6214 | 1209 | 7 | 50.2 | 6 | 0.0050 | 4.28e-09 |
 | 8 bands | pure | 6214 | 1209 | 7 | 46.7 | 6 | 0.0050 | 2.2e-08 |
-| 16 bands | cutoff | 5926 | 1550 | 13 | 41.0 | 12 | 0.0050 | 4.96e-05 |
+| 16 bands | cutoff | 5926 | 1550 | 13 | 41.1 | 12 | 0.0050 | 4.8e-05 |
 | 16 bands | window | 5926 | 1550 | 13 | 57.6 | 12 | 0.0050 | 6.18e-08 |
 | 16 bands | pure | 5926 | 1550 | 13 | 78.9 | 12 | 0.0050 | 6.83e-12 |
 
@@ -614,7 +614,7 @@ Duration subsets and the comparison with 3/2. Cutoff index of each class for all
 | at least 4 points | 34.8 | K | 12428 | 2.077 | 0.163 | 1.684 | 2.172 | True | 0.0010 |
 | at least 4 points | 34.8 | G | 3450 | 2.083 | 0.096 | 1.808 | 2.311 | True | 0.0010 |
 | at least 4 points | 35.0 | M | 4009 | 2.251 | 0.047 | 2.115 | 2.352 | True | 0.0010 |
-| at least 4 points | 35.0 | K | 7903 | 2.239 | 0.200 | 1.711 | 2.311 | True | 0.0010 |
+| at least 4 points | 35.0 | K | 7903 | 2.239 | 0.200 | 1.711 | 2.312 | True | 0.0010 |
 | at least 4 points | 35.0 | G | 1906 | 2.132 | 0.133 | 1.802 | 2.461 | True | 0.0010 |
 | at least 5 points | 34.5 | M | 9728 | 1.777 | 0.049 | 1.638 | 1.876 | True | 0.0010 |
 | at least 5 points | 34.5 | K | 16443 | 1.698 | 0.157 | 1.362 | 1.863 | False | 0.3756 |

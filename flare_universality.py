@@ -222,22 +222,28 @@ COLUMN_REQUEST = {
 }
 
 
+VIZIER_SERVERS = ("vizier.cds.unistra.fr", "vizier.cfa.harvard.edu")
+
+
 def fetch_vizier(name, retries=3):
+    """Download one table from VizieR. The mirror at the CfA is tried when the main server does not answer."""
     cat = DATA_SOURCES[name]
     last = None
-    for attempt in range(1, retries + 1):
-        try:
-            viz = Vizier(columns=COLUMN_REQUEST[name], row_limit=-1)
-            viz.TIMEOUT = 900
-            tables = viz.get_catalogs(cat)
-            if cat not in tables.keys():
-                raise RuntimeError(f"table {cat} not returned by VizieR")
-            return tables[cat].to_pandas()
-        except Exception as err:
-            last = err
-            time.sleep(5 * attempt)
+    for server in VIZIER_SERVERS:
+        for attempt in range(1, retries + 1):
+            try:
+                viz = Vizier(columns=COLUMN_REQUEST[name], row_limit=-1)
+                viz.VIZIER_SERVER = server
+                viz.TIMEOUT = 300
+                tables = viz.get_catalogs(cat)
+                if cat not in tables.keys():
+                    raise RuntimeError(f"table {cat} not returned by VizieR")
+                return tables[cat].to_pandas()
+            except Exception as err:
+                last = err
+                time.sleep(5 * attempt)
     raise RuntimeError(
-        f"Could not download {cat} from VizieR after {retries} attempts. "
+        f"Could not download {cat} from VizieR after {retries} attempts on each of {len(VIZIER_SERVERS)} servers. "
         f"Last error: {last}. The notebook needs network access to VizieR."
     )
 
@@ -3640,6 +3646,14 @@ for _tag, _b in (("Min", _lo), ("Max", _hi)):
     macro(f"Band{_tag}Err", tex_num(float(np.nanstd(_b["boot_alpha_c"], ddof=1)), 2))
     macro(f"Band{_tag}Teff", tex_int(round(_b["Teff median"] / 10.0) * 10))
 macro("BandDroppedTail", tex_int(min(b["tail"] for b in BANDS12 if not b["valid"])))
+# Bands in the range of M, K and G stars, below the lower limit of the F class (5900 K)
+_mkg = [b for b in BANDS12 if b["valid"] and b["Teff median"] < CLASS_EDGES[-1]]
+_top = max(_mkg, key=lambda b: b["alpha_c"])
+macro("NbandsMKG", tex_int(len(_mkg)))
+macro("BandMaxAlphaMKG", tex_num(_top["alpha_c"], 2))
+macro("BandMaxErrMKG", tex_num(float(np.nanstd(_top["boot_alpha_c"], ddof=1)), 2))
+macro("BandMaxTeffMKG", tex_int(round(_top["Teff median"])))
+macro("BandMinAlphaMKG", tex_num(min(b["alpha_c"] for b in _mkg), 2))
 _prot = PEAK_TAB["median Prot (d)"].to_numpy(float)
 macro("BandHotValidTail", tex_int(BANDS12[max(i for i, b in enumerate(BANDS12) if b["valid"])]["tail"]))
 macro("RotBandOne", tex_num(_prot[0], 1))
