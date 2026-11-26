@@ -1,7 +1,7 @@
 # Flare energy distributions of Kepler FGK and M dwarfs
 
 Code and results for the Letter "Is the power-law index of flare energies universal across
-FGK and M dwarfs?". The notebook tests whether the power-law index of the flare energy
+cool dwarfs?". The notebook tests whether the power-law index of the flare energy
 distribution is the same for M, K and G dwarfs, with F stars as a secondary sample, in the Kepler flare catalogue of Yang and Liu
 (2019), and how it changes with effective temperature. Every number, table and figure of the
 Letter is written by the notebook.
